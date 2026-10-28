@@ -9,9 +9,9 @@ let cat = "الكل";
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY));
-    if (s) return { profile: null, days: {}, weights: [], custom: [], ...s };
+    if (s) return { profile: null, days: {}, weights: [], custom: [], ...s, settings: { theme: "auto", font: 1, apiKey: "", ...s.settings } };
   } catch (e) {}
-  return { profile: null, days: {}, weights: [], custom: [] };
+  return { profile: null, days: {}, weights: [], custom: [], settings: { theme: "auto", font: 1, apiKey: "" } };
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast("تعذّر الحفظ"); } }
 function today(d = new Date()) {
@@ -145,6 +145,27 @@ function removeEntry(m, i) {
   const d = day, [e] = getDay(d).meals[m].splice(i, 1); save(); renderHome();
   toast(`اتمسح ${e.name}`, () => { getDay(d).meals[m].splice(i, 0, e); save(); renderHome(); });
 }
+async function pasteActive() {
+  try {
+    const v = parseFloat((await navigator.clipboard.readText()).replace(/[^\d.]/g, ""));
+    if (!(v >= 0)) return toast("مفيش رقم في الحافظة");
+    $("activeIn").value = Math.round(v); setActive();
+  } catch (e) { toast("اسمح بالوصول للحافظة، أو الصق بإيدك"); }
+}
+// ===== الإعدادات =====
+function applySettings() {
+  const st = S.settings, root = document.documentElement;
+  if (st.theme === "auto") delete root.dataset.theme; else root.dataset.theme = st.theme;
+  root.style.fontSize = (st.font * 100) + "%";
+  $("setTheme").value = st.theme; $("setFont").value = st.font; $("setKey").value = st.apiKey;
+  $("keyState").textContent = st.apiKey ? "✅ الخبير الذكي مفعّل" : "الخبير المدمج شغال (من غير مفتاح)";
+}
+function saveSettings() {
+  const key = $("setKey").value.trim();
+  if (key && !key.startsWith("sk-ant-")) return toast("المفتاح لازم يبدأ بـ sk-ant-");
+  S.settings = { theme: $("setTheme").value, font: +$("setFont").value, apiKey: key };
+  save(); applySettings(); toast("✅ اتحفظت الإعدادات");
+}
 function setActive() {
   const v = parseFloat($("activeIn").value) || 0;
   if (v < 0 || v > 5000) return toast("ادخل رقم صحيح");
@@ -153,7 +174,7 @@ function setActive() {
 function wipeAll() {
   if (!confirm("هيتمسح كل حاجة: ملفك والأكل والوزن والأكلات المضافة. مش هتقدر ترجعها إلا من نسخة احتياطية. متأكد؟")) return;
   try { localStorage.removeItem(KEY); } catch (e) {}
-  S = load(); day = today(); fillProfile(); $("results2").style.display = "none";
+  S = load(); day = today(); fillProfile(); applySettings(); $("results2").style.display = "none";
   renderCats(); go("profile"); toast("اتمسحت كل البيانات");
 }
 
@@ -284,7 +305,7 @@ function renderExpert() {
   $("analysis").innerHTML = out.join("");
   renderSuggest(T, t);
   if (!$("chat").children.length) {
-    botSay("أهلاً! أنا خبير التغذية بتاعك 🥗\nاسألني عن التخسيس، البروتين، الصيام المتقطع، الأكل قبل التمرين... أو اكتب اسم أكلة وأقولك سعراتها.");
+    botSay((S.settings.apiKey ? "🤖 الخبير الذكي شغال (Claude).\n" : "") + "أهلاً! أنا خبير التغذية بتاعك 🥗\nاسألني عن التخسيس، البروتين، الصيام المتقطع، الأكل قبل التمرين... أو اكتب اسم أكلة وأقولك سعراتها.");
     const qs = ["كام سعر محتاج؟", "إزاي أخس بطني؟", "الصيام المتقطع", "وزني ثابت ليه؟", "آكل إيه قبل التمرين؟", "كام سعر في الكشري؟"];
     $("quickQ").innerHTML = qs.map(q => `<button class="chip" onclick="$('q').value=this.textContent;ask()">${q}</button>`).join("");
   }
@@ -366,10 +387,15 @@ function answer(q) {
   return "مش متأكد إني فهمت السؤال 🤔\nجرب تسأل عن: التخسيس، العضل، البروتين، النشويات، الصيام المتقطع، ثبات الوزن، المياه، الفيتامينات… أو اكتب اسم أكلة.";
 }
 function botSay(t) { const d = document.createElement("div"); d.className = "msg bot"; d.textContent = t; $("chat").appendChild(d); $("chat").scrollTop = 1e6; }
-function ask() {
+async function ask() {
   const q = $("q").value.trim(); if (!q) return;
   const d = document.createElement("div"); d.className = "msg me"; d.textContent = q; $("chat").appendChild(d);
-  $("q").value = ""; setTimeout(() => botSay(answer(q)), 250);
+  $("q").value = "";
+  // من غير مفتاح أو من غير نت: الخبير المدمج
+  if (!S.settings.apiKey || !navigator.onLine) return setTimeout(() => botSay(answer(q)), 250);
+  botSay("⏳ بفكر..."); const bubble = $("chat").lastChild;
+  try { await askAI(q, bubble); }
+  catch (e) { bubble.textContent = `⚠️ ${e.message}\n\nرد الخبير المدمج:\n${answer(q)}`; }
 }
 $("q").addEventListener("keydown", e => { if (e.key === "Enter") ask(); });
 
@@ -419,6 +445,6 @@ $("installBtn").onclick = async () => { if (!deferredPrompt) return; deferredPro
   const a = parseFloat(new URLSearchParams(location.search).get("active"));
   if (a >= 0 && a <= 5000) { getDay(today()).active = Math.round(a); save(); history.replaceState(null, "", location.pathname); }
 })();
-fillProfile(); if (S.profile) renderProfileResults();
+applySettings(); fillProfile(); if (S.profile) renderProfileResults();
 renderCats(); renderHome();
 if (!S.profile) go("profile");

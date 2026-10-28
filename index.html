@@ -162,7 +162,8 @@ nav button.active { color: var(--primary); }
         <input id="activeIn" type="number" min="0" max="5000" inputmode="numeric" placeholder="السعرات النشطة (Active)">
         <button onclick="setActive()">حفظ</button>
       </div>
-      <p class="muted" style="margin-top:6px">من تطبيق Fitness على الآيفون: الرقم الأحمر (Move). اكتبه آخر اليوم، وهدفك هيتعدل لوحده.</p>
+      <button class="ghost small" style="margin-top:8px" onclick="pasteActive()">📋 لصق من الساعة</button>
+      <p class="muted" style="margin-top:6px">من تطبيق Fitness على الآيفون: الرقم الأحمر (Move). اكتبه آخر اليوم، أو انسخه باختصار Shortcuts واضغط «لصق من الساعة».</p>
     </div>
 
     <div class="card">
@@ -301,6 +302,24 @@ nav button.active { color: var(--primary); }
       <button style="width:100%;margin-top:14px" onclick="saveProfile()">احسب واحفظ</button>
     </div>
     <div class="card" id="results2" style="display:none"></div>
+    <div class="card">
+      <h2>⚙️ الإعدادات</h2>
+      <div class="grid2">
+        <div><label for="setTheme">المظهر</label><select id="setTheme"><option value="auto">تلقائي</option><option value="light">فاتح</option><option value="dark">داكن</option></select></div>
+        <div><label for="setFont">حجم الخط</label><select id="setFont"><option value="1">عادي</option><option value="1.12">كبير</option><option value="1.25">كبير جداً</option></select></div>
+      </div>
+      <label for="setKey" style="margin-top:10px">مفتاح Claude API للخبير الذكي (اختياري)</label>
+      <input id="setKey" type="password" placeholder="sk-ant-..." autocomplete="off" dir="ltr">
+      <p class="muted" id="keyState" style="margin-top:4px"></p>
+      <p class="muted">المفتاح بيتحفظ على جهازك بس. هاته من console.anthropic.com ← API Keys. كل سؤال بيتكلف سنتات قليلة من رصيدك.</p>
+      <button class="ghost" style="width:100%;margin-top:10px" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+    </div>
+    <div class="card">
+      <h2>🔒 الخصوصية</h2>
+      <p class="muted">• كل بياناتك (الوزن، الأكل، ملفك) محفوظة على جهازك بس، ومفيش أي سيرفر بيستلمها.<br>
+      • لو فعّلت الخبير الذكي: سؤالك وملخص يومك بيتبعتوا لـ Anthropic (Claude) علشان يرد عليك، ومفيش حاجة تانية بتتبعت.<br>
+      • تقدر تمسح كل بياناتك في أي وقت من «التقدم» ← «احذف كل بياناتي».</p>
+    </div>
     <p class="muted" style="text-align:center;padding:0 10px">⚠️ المعلومات دي إرشادية ومش بديل عن الطبيب. لو عندك سكر أو ضغط أو مشاكل كلى أو حامل، استشير دكتور تغذية.</p>
   </section>
 </main>
@@ -312,9 +331,10 @@ nav button.active { color: var(--primary); }
   <button data-v="stats"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>التقدم</button>
   <button data-v="profile"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>ملفي</button>
 </nav>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="foods.js"></script>
 <script src="app.js"></script>
+<script src="ai.js"></script>
 </body>
 </html>
