@@ -24,14 +24,25 @@ function getDay(d = day) {
 function allFoods() { return [...S.custom, ...FOODS]; }
 const r = (n, d = 0) => Number(n.toFixed(d));
 const $ = id => document.getElementById(id);
-function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1800); }
+let toastTimer;
+function toast(msg, undo) {
+  const t = $("toast"); t.textContent = msg;
+  if (undo) {
+    const b = document.createElement("button"); b.textContent = "تراجع"; b.className = "small";
+    b.onclick = () => { undo(); t.classList.remove("show"); }; t.append(" ", b);
+  }
+  t.style.pointerEvents = undo ? "auto" : "none"; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), undo ? 5000 : 1800);
+}
 
 // ===== الحسابات (معادلة Mifflin-St Jeor) =====
-function calcTargets(p) {
+// active = السعرات النشطة من Apple Watch لليوم المعروض (لو متسجلة)
+function calcTargets(p, active = S.days[day]?.active || 0) {
   if (!p) return null;
   const hM = p.height / 100;
   const bmr = 10 * p.weight + 6.25 * p.height - 5 * p.age + (p.sex === "m" ? 5 : -161);
-  const tdee = bmr * p.activity;
+  // لو فيه حرق من الساعة: الحرق = الأساسي × 1.2 (حركة يومية خفيفة) + النشط من الساعة، بدل معامل النشاط علشان مايتحسبش مرتين
+  const tdee = active > 0 ? bmr * 1.2 + active : bmr * p.activity;
   const delta = (p.goal * 7700) / 7;               // 1 كجم دهون ≈ 7700 سعر
   const floor = p.sex === "m" ? 1500 : 1200;        // حد أدنى آمن
   const kcal = Math.round(Math.max(tdee + delta, floor) / 10) * 10;
@@ -97,7 +108,10 @@ function renderHome() {
   const arc = $("ringArc");
   arc.style.strokeDashoffset = 351.86 * (1 - pct);
   arc.style.stroke = left < -goal * 0.1 ? "var(--bad)" : "var(--primary)";
-  $("kcalNote").textContent = T ? `الحرق اليومي ≈ ${T.tdee} سعر` : "ادخل بياناتك لحساب هدفك";
+  const active = getDay().active || 0;
+  $("kcalNote").textContent = !T ? "ادخل بياناتك لحساب هدفك"
+    : active ? `الحرق اليومي ≈ ${T.tdee} سعر (منهم ${active} من الساعة ⌚)` : `الحرق اليومي ≈ ${T.tdee} سعر (تقديري)`;
+  $("activeIn").value = active || "";
 
   const macros = [
     ["بروتين", t.p, T?.protein, "var(--p)"], ["كارب", t.c, T?.carbs, "var(--c)"],
@@ -127,7 +141,21 @@ function renderHome() {
   }).join("");
 }
 function setWater(n) { const dd = getDay(); dd.water = dd.water === n ? n - 1 : n; save(); renderHome(); }
-function removeEntry(m, i) { getDay().meals[m].splice(i, 1); save(); renderHome(); }
+function removeEntry(m, i) {
+  const d = day, [e] = getDay(d).meals[m].splice(i, 1); save(); renderHome();
+  toast(`اتمسح ${e.name}`, () => { getDay(d).meals[m].splice(i, 0, e); save(); renderHome(); });
+}
+function setActive() {
+  const v = parseFloat($("activeIn").value) || 0;
+  if (v < 0 || v > 5000) return toast("ادخل رقم صحيح");
+  getDay().active = Math.round(v); save(); renderHome(); toast(v ? "✅ اتحدّث هدفك حسب حرق الساعة" : "اتشال حرق الساعة");
+}
+function wipeAll() {
+  if (!confirm("هيتمسح كل حاجة: ملفك والأكل والوزن والأكلات المضافة. مش هتقدر ترجعها إلا من نسخة احتياطية. متأكد؟")) return;
+  try { localStorage.removeItem(KEY); } catch (e) {}
+  S = load(); day = today(); fillProfile(); $("results2").style.display = "none";
+  renderCats(); go("profile"); toast("اتمسحت كل البيانات");
+}
 
 // ===== إضافة أكل =====
 function norm(s) {
@@ -198,7 +226,7 @@ function saveProfile() {
   S.profile = p; save(); renderProfileResults(); toast("✅ اتحسب احتياجك");
 }
 function renderProfileResults() {
-  const p = S.profile, T = calcTargets(p); if (!T) return;
+  const p = S.profile, T = calcTargets(p, 0); if (!T) return;
   const [bl, bc] = bmiLabel(T.bmi);
   let eta = "";
   if (p.targetW && p.goal !== 0 && Math.sign(p.targetW - p.weight) === Math.sign(p.goal)) {
@@ -386,6 +414,11 @@ window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferr
 $("installBtn").onclick = async () => { if (!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; $("installBtn").style.display = "none"; };
 
 // ===== البداية =====
+// اختصار iPhone (Shortcuts) يقدر يفتح الرابط بـ ?active=450 علشان يسجل حرق الساعة تلقائياً
+(() => {
+  const a = parseFloat(new URLSearchParams(location.search).get("active"));
+  if (a >= 0 && a <= 5000) { getDay(today()).active = Math.round(a); save(); history.replaceState(null, "", location.pathname); }
+})();
 fillProfile(); if (S.profile) renderProfileResults();
 renderCats(); renderHome();
 if (!S.profile) go("profile");

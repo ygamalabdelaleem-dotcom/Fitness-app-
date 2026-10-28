@@ -109,7 +109,7 @@ nav button.active { color: var(--primary); }
 .water { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
 .cup { width: 28px; height: 34px; border: 2px solid var(--f); border-radius: 0 0 8px 8px; cursor: pointer; background: transparent; padding: 0; }
 .cup.full { background: var(--f); }
-.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 99px; font-size: .9rem; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 20; }
+.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 99px; font-size: .9rem; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 20; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .toast.show { opacity: 1; }
 #installBtn { display: none; }
 </style>
@@ -154,6 +154,15 @@ nav button.active { color: var(--primary); }
           <div class="muted" id="kcalNote"></div>
         </div>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>⌚ حرق Apple Watch</h2>
+      <div class="row">
+        <input id="activeIn" type="number" min="0" max="5000" inputmode="numeric" placeholder="السعرات النشطة (Active)">
+        <button onclick="setActive()">حفظ</button>
+      </div>
+      <p class="muted" style="margin-top:6px">من تطبيق Fitness على الآيفون: الرقم الأحمر (Move). اكتبه آخر اليوم، وهدفك هيتعدل لوحده.</p>
     </div>
 
     <div class="card">
@@ -254,6 +263,7 @@ nav button.active { color: var(--primary); }
       <h2>🗂️ بياناتك</h2>
       <div class="row">
         <button class="ghost small" onclick="exportData()">⬇️ تصدير نسخة احتياطية</button>
+        <button class="danger small" onclick="wipeAll()">🗑️ احذف كل بياناتي</button>
         <label class="chip" style="margin:0">⬆️ استيراد<input type="file" accept=".json" onchange="importData(event)" hidden></label>
       </div>
     </div>

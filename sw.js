@@ -1,5 +1,5 @@
 // يشتغل بدون إنترنت: كاش للملفات الأساسية
-const CACHE = "nutri-v2";
+const CACHE = "nutri-v3";
 const FILES = ["./", "index.html", "app.js", "foods.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener("activate", e => {
