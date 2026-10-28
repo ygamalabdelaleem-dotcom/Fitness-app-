@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>خبير التغذية</title>
+<meta name="description" content="احسب سعراتك واعرف احتياجك اليومي مع خبير تغذية ذكي يعمل بدون إنترنت">
+<meta name="theme-color" content="#0f9d58">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="خبير التغذية">
+<style>
+:root {
+  --bg: #f4f7f5; --card: #ffffff; --text: #1b2a22; --muted: #66756c; --line: #e3e9e5;
+  --primary: #0f9d58; --primary-soft: #e3f5ec; --p: #e5484d; --c: #f5a524; --f: #3e7bfa; --fib: #8e4ec6;
+  --warn: #f5a524; --bad: #e5484d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1512; --card: #18211c; --text: #e8efe9; --muted: #93a39a; --line: #26332b;
+    --primary: #2fbf71; --primary-soft: #1a3427;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1512; --card: #18211c; --text: #e8efe9; --muted: #93a39a; --line: #26332b;
+  --primary: #2fbf71; --primary-soft: #1a3427;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "Segoe UI", Tahoma, "Noto Kufi Arabic", sans-serif; background: var(--bg); color: var(--text);
+  line-height: 1.6; padding-bottom: calc(76px + env(safe-area-inset-bottom));
+}
+header { background: var(--primary); color: #fff; padding: 16px; padding-top: calc(16px + env(safe-area-inset-top)); }
+header h1 { font-size: 1.25rem; }
+header p { font-size: .85rem; opacity: .9; }
+main { max-width: 640px; margin: 0 auto; padding: 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+.card h2 { font-size: 1.05rem; margin-bottom: 10px; }
+.muted { color: var(--muted); font-size: .85rem; }
+.row { display: flex; gap: 10px; align-items: center; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 4px; }
+input, select, textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit;
+  background: var(--bg); color: var(--text);
+}
+button {
+  font: inherit; border: 0; border-radius: 10px; padding: 10px 14px; cursor: pointer;
+  background: var(--primary); color: #fff; font-weight: 600;
+}
+button.ghost { background: var(--primary-soft); color: var(--primary); }
+button.small { padding: 6px 10px; font-size: .85rem; }
+button.danger { background: transparent; color: var(--bad); padding: 4px 8px; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* الحلقة الرئيسية */
+.ring-wrap { display: flex; align-items: center; gap: 18px; }
+.ring { width: 130px; height: 130px; flex-shrink: 0; position: relative; }
+.ring svg { transform: rotate(-90deg); }
+.ring .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring .big { font-size: 1.6rem; font-weight: 700; }
+.stats div { margin-bottom: 4px; }
+.bar { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 4px 0 10px; }
+.bar > span { display: block; height: 100%; border-radius: 99px; transition: width .4s; }
+.macro-head { display: flex; justify-content: space-between; font-size: .9rem; }
+
+/* الوجبات */
+.meal-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); font-size: .9rem; }
+.meal-item:first-of-type { border-top: 0; }
+.meal-title { display: flex; justify-content: space-between; align-items: center; }
+
+/* البحث */
+.results { max-height: 320px; overflow-y: auto; margin-top: 8px; }
+.result { padding: 10px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; }
+.result:hover, .result.sel { background: var(--primary-soft); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.chip { padding: 4px 10px; border-radius: 99px; background: var(--bg); border: 1px solid var(--line); font-size: .8rem; cursor: pointer; color: var(--text); font-weight: 400; }
+.chip.on { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* الخبير */
+.tip { padding: 10px 12px; border-radius: 10px; margin-bottom: 8px; font-size: .92rem; border-inline-start: 4px solid var(--primary); background: var(--primary-soft); }
+.tip.warn { border-color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.tip.bad { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
+.chat { max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.msg { padding: 10px 12px; border-radius: 12px; max-width: 90%; font-size: .92rem; white-space: pre-line; }
+.msg.me { background: var(--primary); color: #fff; align-self: flex-start; }
+.msg.bot { background: var(--bg); border: 1px solid var(--line); align-self: flex-end; }
+
+/* الإحصائيات */
+.week { display: flex; align-items: flex-end; gap: 6px; height: 140px; padding-top: 10px; }
+.week .col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; font-size: .7rem; color: var(--muted); }
+.week .col span { width: 100%; border-radius: 6px 6px 0 0; background: var(--primary); min-height: 2px; }
+.week .col span.over { background: var(--bad); }
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+.kpi { background: var(--bg); border-radius: 12px; padding: 10px 4px; }
+.kpi b { display: block; font-size: 1.15rem; }
+
+/* الشريط السفلي */
+nav {
+  position: fixed; bottom: 0; inset-inline: 0; background: var(--card); border-top: 1px solid var(--line);
+  display: flex; justify-content: space-around; padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); z-index: 10;
+}
+nav button { background: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; font-size: .75rem; font-weight: 500; padding: 4px 8px; }
+nav button .ic { font-size: 1.35rem; line-height: 1.2; }
+nav button.active { color: var(--primary); }
+.water { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.cup { width: 28px; height: 34px; border: 2px solid var(--f); border-radius: 0 0 8px 8px; cursor: pointer; background: transparent; padding: 0; }
+.cup.full { background: var(--f); }
+.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 99px; font-size: .9rem; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 20; }
+.toast.show { opacity: 1; }
+#installBtn { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <div class="row" style="justify-content:space-between">
+    <div>
+      <h1>🥗 خبير التغذية</h1>
+      <p id="headerSub">احسب سعراتك بدقة وخلّي أكلك صح</p>
+    </div>
+    <button id="installBtn" class="small ghost" style="background:#fff">📲 ثبّت التطبيق</button>
+  </div>
+</header>
+
+<main>
+  <!-- ===== الرئيسية ===== -->
+  <section id="v-home" class="view active">
+    <div class="card" id="noProfile" style="display:none">
+      <h2>أهلاً بيك 👋</h2>
+      <p class="muted" style="margin-bottom:10px">ابدأ بإدخال بياناتك علشان نحسب احتياجك اليومي من السعرات والبروتين.</p>
+      <button onclick="go('profile')">ادخل بياناتي</button>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <button class="small ghost" onclick="shiftDay(-1)">→ اليوم السابق</button>
+        <b id="dayLabel"></b>
+        <button class="small ghost" onclick="shiftDay(1)">التالي ←</button>
+      </div>
+      <div class="ring-wrap">
+        <div class="ring">
+          <svg width="130" height="130" viewBox="0 0 130 130">
+            <circle cx="65" cy="65" r="56" fill="none" stroke="var(--line)" stroke-width="12"/>
+            <circle id="ringArc" cx="65" cy="65" r="56" fill="none" stroke="var(--primary)" stroke-width="12" stroke-linecap="round" stroke-dasharray="351.86" stroke-dashoffset="351.86"/>
+          </svg>
+          <div class="center"><span class="big" id="kcalLeft">0</span><span class="muted" id="kcalLeftLbl">متبقي</span></div>
+        </div>
+        <div class="stats">
+          <div>🎯 الهدف: <b id="kcalGoal">—</b></div>
+          <div>🍽️ أكلت: <b id="kcalEaten">0</b></div>
+          <div class="muted" id="kcalNote"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>العناصر الغذائية</h2>
+      <div id="macroBars"></div>
+    </div>
+
+    <div class="card">
+      <div class="meal-title"><h2>💧 المياه</h2><span class="muted" id="waterTxt"></span></div>
+      <div class="water" id="water"></div>
+    </div>
+
+    <div id="meals"></div>
+  </section>
+
+  <!-- ===== إضافة أكل ===== -->
+  <section id="v-add" class="view">
+    <div class="card">
+      <h2>إضافة أكل</h2>
+      <label>الوجبة</label>
+      <select id="mealSel">
+        <option value="breakfast">🌅 فطار</option>
+        <option value="lunch">🍛 غدا</option>
+        <option value="dinner">🌙 عشا</option>
+        <option value="snacks">🍎 سناكس</option>
+      </select>
+      <div style="margin-top:10px">
+        <input id="search" placeholder="🔍 ابحث: فول، فراخ، أرز..." autocomplete="off">
+      </div>
+      <div class="chips" id="cats"></div>
+      <div class="results" id="results"></div>
+    </div>
+
+    <div class="card" id="pickCard" style="display:none">
+      <h2 id="pickName"></h2>
+      <p class="muted" id="pickPer100"></p>
+      <div class="grid2" style="margin-top:10px">
+        <div><label>عدد الحصص</label><input id="pickQty" type="number" min="0" step="0.5" value="1" inputmode="decimal"></div>
+        <div><label>أو الوزن (جرام)</label><input id="pickGrams" type="number" min="0" step="5" inputmode="decimal"></div>
+      </div>
+      <p id="pickCalc" style="margin:10px 0;font-weight:600"></p>
+      <button onclick="addPicked()" style="width:100%">➕ أضف للوجبة</button>
+    </div>
+
+    <div class="card">
+      <h2>أكلة مش موجودة؟ أضفها</h2>
+      <p class="muted" style="margin-bottom:8px">اكتب القيم لكل 100 جرام (موجودة على ظهر العبوة)</p>
+      <input id="cName" placeholder="اسم الأكلة" style="margin-bottom:8px">
+      <div class="grid2">
+        <div><label>سعرات</label><input id="cKcal" type="number" inputmode="decimal"></div>
+        <div><label>بروتين (جم)</label><input id="cP" type="number" inputmode="decimal"></div>
+        <div><label>كارب (جم)</label><input id="cC" type="number" inputmode="decimal"></div>
+        <div><label>دهون (جم)</label><input id="cF" type="number" inputmode="decimal"></div>
+        <div><label>ألياف (جم)</label><input id="cFib" type="number" inputmode="decimal"></div>
+        <div><label>وزن الحصة (جم)</label><input id="cPortion" type="number" value="100" inputmode="decimal"></div>
+      </div>
+      <button class="ghost" style="width:100%;margin-top:10px" onclick="saveCustom()">💾 احفظ الأكلة</button>
+    </div>
+  </section>
+
+  <!-- ===== الخبير ===== -->
+  <section id="v-expert" class="view">
+    <div class="card">
+      <h2>🧠 تحليل يومك</h2>
+      <div id="analysis"></div>
+    </div>
+    <div class="card">
+      <h2>💡 اقتراحات تكمّل يومك</h2>
+      <div id="suggest"></div>
+    </div>
+    <div class="card">
+      <h2>💬 اسأل الخبير</h2>
+      <div class="chat" id="chat"></div>
+      <div class="chips" id="quickQ" style="margin-bottom:8px"></div>
+      <div class="row">
+        <input id="q" placeholder="مثلاً: إزاي أنزل وزن من غير ما أخسر عضل؟">
+        <button onclick="ask()">إرسال</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== التقدم ===== -->
+  <section id="v-stats" class="view">
+    <div class="card">
+      <h2>📊 آخر 7 أيام</h2>
+      <div class="week" id="week"></div>
+      <p class="muted" style="margin-top:6px">الخط الأحمر = تعديت الهدف</p>
+    </div>
+    <div class="card">
+      <h2>⚖️ متابعة الوزن</h2>
+      <div class="row">
+        <input id="wIn" type="number" step="0.1" placeholder="وزن النهارده (كجم)" inputmode="decimal">
+        <button onclick="logWeight()">سجّل</button>
+      </div>
+      <div id="wList" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <h2>🗂️ بياناتك</h2>
+      <div class="row">
+        <button class="ghost small" onclick="exportData()">⬇️ تصدير نسخة احتياطية</button>
+        <label class="chip" style="margin:0">⬆️ استيراد<input type="file" accept=".json" onchange="importData(event)" hidden></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ملفي ===== -->
+  <section id="v-profile" class="view">
+    <div class="card">
+      <h2>👤 بياناتك</h2>
+      <div class="grid2">
+        <div><label>النوع</label><select id="sex"><option value="m">ذكر</option><option value="f">أنثى</option></select></div>
+        <div><label>السن</label><input id="age" type="number" min="12" max="100" inputmode="numeric"></div>
+        <div><label>الطول (سم)</label><input id="height" type="number" min="100" max="230" inputmode="numeric"></div>
+        <div><label>الوزن (كجم)</label><input id="weight" type="number" min="30" max="300" step="0.1" inputmode="decimal"></div>
+      </div>
+      <label style="margin-top:10px">النشاط اليومي</label>
+      <select id="activity">
+        <option value="1.2">قليل جداً (شغل مكتبي بدون رياضة)</option>
+        <option value="1.375">خفيف (رياضة 1-3 أيام)</option>
+        <option value="1.55">متوسط (رياضة 3-5 أيام)</option>
+        <option value="1.725">عالي (رياضة 6-7 أيام)</option>
+        <option value="1.9">عالي جداً (شغل بدني + تمرين)</option>
+      </select>
+      <label style="margin-top:10px">هدفك</label>
+      <select id="goal">
+        <option value="-0.75">نزول وزن سريع (0.75 كجم/أسبوع)</option>
+        <option value="-0.5" selected>نزول وزن (0.5 كجم/أسبوع)</option>
+        <option value="-0.25">نزول وزن هادي (0.25 كجم/أسبوع)</option>
+        <option value="0">ثبات الوزن</option>
+        <option value="0.25">زيادة عضل (0.25 كجم/أسبوع)</option>
+        <option value="0.5">زيادة وزن (0.5 كجم/أسبوع)</option>
+      </select>
+      <label style="margin-top:10px">الوزن المستهدف (اختياري)</label>
+      <input id="targetW" type="number" step="0.1" inputmode="decimal">
+      <button style="width:100%;margin-top:14px" onclick="saveProfile()">احسب واحفظ</button>
+    </div>
+    <div class="card" id="results2" style="display:none"></div>
+    <p class="muted" style="text-align:center;padding:0 10px">⚠️ المعلومات دي إرشادية ومش بديل عن الطبيب. لو عندك سكر أو ضغط أو مشاكل كلى أو حامل، استشير دكتور تغذية.</p>
+  </section>
+</main>
+
+<nav>
+  <button data-v="home" class="active"><span class="ic">🏠</span>الرئيسية</button>
+  <button data-v="add"><span class="ic">➕</span>إضافة</button>
+  <button data-v="expert"><span class="ic">🧠</span>الخبير</button>
+  <button data-v="stats"><span class="ic">📊</span>التقدم</button>
+  <button data-v="profile"><span class="ic">👤</span>ملفي</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script src="foods.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
