@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0f9d58">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="خبير التغذية">
 <style>
@@ -104,7 +104,7 @@ nav {
   display: flex; justify-content: space-around; padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); z-index: 10;
 }
 nav button { background: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; font-size: .75rem; font-weight: 500; padding: 4px 8px; }
-nav button .ic { font-size: 1.35rem; line-height: 1.2; }
+nav button .ic { width: 24px; height: 24px; margin-bottom: 2px; }
 nav button.active { color: var(--primary); }
 .water { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
 .cup { width: 28px; height: 34px; border: 2px solid var(--f); border-radius: 0 0 8px 8px; cursor: pointer; background: transparent; padding: 0; }
@@ -118,7 +118,7 @@ nav button.active { color: var(--primary); }
 <header>
   <div class="row" style="justify-content:space-between">
     <div>
-      <h1>🥗 خبير التغذية</h1>
+      <h1 style="display:flex;align-items:center;gap:8px"><img src="icon.svg" alt="" width="30" height="30" style="border-radius:8px">خبير التغذية</h1>
       <p id="headerSub">احسب سعراتك بدقة وخلّي أكلك صح</p>
     </div>
     <button id="installBtn" class="small ghost" style="background:#fff">📲 ثبّت التطبيق</button>
@@ -296,11 +296,11 @@ nav button.active { color: var(--primary); }
 </main>
 
 <nav>
-  <button data-v="home" class="active"><span class="ic">🏠</span>الرئيسية</button>
-  <button data-v="add"><span class="ic">➕</span>إضافة</button>
-  <button data-v="expert"><span class="ic">🧠</span>الخبير</button>
-  <button data-v="stats"><span class="ic">📊</span>التقدم</button>
-  <button data-v="profile"><span class="ic">👤</span>ملفي</button>
+  <button data-v="home" class="active"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>الرئيسية</button>
+  <button data-v="add"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>إضافة</button>
+  <button data-v="expert"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>الخبير</button>
+  <button data-v="stats"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>التقدم</button>
+  <button data-v="profile"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>ملفي</button>
 </nav>
 <div class="toast" id="toast"></div>
 
